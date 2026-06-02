@@ -1,16 +1,31 @@
-# Compiled class file
+# Java build output
 *.class
+target/
+/jds-server/target/
+/jds-desktop-client/target/
 
-# Log file
+# Maven and Gradle transient state
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+.gradle/
+build/
+out/
+
+# IDE metadata
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+bin/
+.vscode/
+
+# Logs and runtime diagnostics
 *.log
+hs_err_pid*
+replay_pid*
 
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# Packaged archives
 *.jar
 *.war
 *.nar
@@ -19,11 +34,10 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# OS files
+.DS_Store
+Thumbs.db
 
-
-
-
-*.py 
+# Local environment files
+.env
+.env.*
