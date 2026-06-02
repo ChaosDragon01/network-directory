@@ -112,7 +112,7 @@ src/
  ├── main/
  │   ├── java/
  │   │   └── com/
- │   │       └── yourname/
+ │   │       └── name/
  │   │           └── directoryservice/
  │   │               ├── config/
  │   │               ├── controller/
