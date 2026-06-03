@@ -1,130 +1,90 @@
-# Java Directory Service
+# Java Directory Service (JDS)
 
-A Java-based directory management system inspired by core ideas from Active Directory, built for learning and internal network management.
+**Architecture:** Client-Server / API-Driven Desktop Application  
+**Network Protocols:** REST (JSON), LDAP, LDAPS  
 
-This project is designed to manage users, groups, roles, permissions, organizational units, and authentication in a centralized way.
+A centralized directory management system engineered for identity governance, hierarchical resource organization, and network security simulations. JDS separates all core business and authentication rules into a headless API backend, which is managed over the network via a native desktop application acting as the control plane.
 
-## Overview
+---
 
-The goal of this project is to provide a lightweight directory service that can:
+## System Architecture
 
-- store and manage user accounts
-- organize users into groups and organizational units
-- control access through roles and permissions
-- support login and session handling
-- expose directory operations through a Java backend
+The project is structured as a decoupled, multi-module Maven workspace split along explicit network boundaries:
 
-This is not a full replacement for Active Directory. It is a custom Java implementation focused on core directory concepts.
+### 1. The Headless Directory Engine (Server)
+A standalone backend service responsible for persistent directory storage, cryptographic operations, access validation, and token lifecycles.
+* **Core Stack:** Java 17, Spring Boot, Spring Security, Spring Data JPA.
+* **Data Layer:** PostgreSQL (Production configuration) and H2 (In-memory testing runtime).
+* **Network Handlers:** Exposes standard JSON endpoints on port 8080 for desktop client communication, alongside an embedded UnboundID LDAP SDK listener on port 10389 for standard directory querying.
 
-## Core Features
+### 2. The Administration Console (Desktop Client)
+A thick desktop interface serving as the primary control interface for domain administrators.
+* **UI Stack:** JavaFX 17 paired with ControlsFX for complex, enterprise-ready UI layout elements.
+* **Network Client:** Retrofit and OkHttp for processing asynchronous background network communications.
+* **Thread Safety:** Implements strict backgrounding of REST processing to ensure the JavaFX Application Thread never stalls during active network conditions.
 
-- User management
-- Group management
-- Role based access control
-- Organizational unit structure
-- Authentication and authorization
-- Password hashing and account security
-- Audit logging
-- REST API for directory operations
-- Database-backed persistence
+---
 
-## Suggested Tech Stack
+## Core Operational Features
 
-- Java
-- Spring Boot
-- Spring Security
-- Spring Data JPA
-- PostgreSQL or MySQL
-- Maven or Gradle
-- Lombok
-- JWT for authentication if needed
+* **Multi-Protocol Capabilities:** Concurrent handling of client application administrative requests via JSON REST endpoints, alongside native authentication handling over standard LDAP BIND operations.
+* **Hierarchical Resource Topologies:** Deeply nestable Organizational Units (OUs) that maintain domain relationships while avoiding circular dependency traps during serialization.
+* **Unified Governance Controls:** A security framework merging Role-Based Access Control (RBAC permissions mapping) with Mandatory Access Control (MAC operational bounds).
+* **Automated Maintenance Tasks:** Integrated background schedulers handling expired desktop user sessions, policy tracking, and rolling log purges.
+* **Immutable Auditing:** Secure tracking configurations capturing actions, target entities, timestamps, and correlation IDs to guarantee compliance trails.
 
-## Basic Directory Model
+---
 
-The system can be organized around the following entities:
+## Directory Data Model
 
-### User
-Represents an individual account in the directory.
+The system organizes domain state across the following entities:
 
-Fields may include:
-- id
-- username
-- passwordHash
-- firstName
-- lastName
-- email
-- status
-- createdAt
-- updatedAt
+* **User:** Accounts containing profile properties, cryptographic salt definitions, security flags, and state contexts.
+* **Group:** Custom pooling structures matching identities for collective rights management.
+* **Role & Permission:** Granular capability mapping providing system access rights (such as `USER_CREATE` or `AUDIT_VIEW`) across the directory.
+* **Organizational Unit (OU):** Tree structural elements facilitating administration boundaries and policy application targets.
+* **Audit Log:** Chronological, write-once verification ledger tracking structural variations, authorization denials, and core state edits.
 
-### Group
-Represents a collection of users.
+---
 
-Fields may include:
-- id
-- groupName
-- description
-- members
-- createdAt
+## Verified Workspace Structure
 
-### Role
-Represents a set of privileges.
+The project maps directly to this clean, multi-module structural layout:
 
-Fields may include:
-- id
-- roleName
-- permissions
-
-### Permission
-Represents a specific action a user or group is allowed to perform.
-
-Examples:
-- CREATE_USER
-- DELETE_USER
-- UPDATE_GROUP
-- VIEW_AUDIT_LOGS
-
-### Organizational Unit
-Represents a hierarchy for organizing users and groups.
-
-Fields may include:
-- id
-- unitName
-- parentUnit
-- children
-- users
-- groups
-
-### Audit Log
-Tracks important security and administrative actions.
-
-Examples:
-- login attempts
-- password changes
-- user creation
-- group membership changes
-- permission updates
-
-## Suggested Project Structure
-
-```txt
-src/
- ├── main/
- │   ├── java/
- │   │   └── com/
- │   │       └── name/
- │   │           └── directoryservice/
- │   │               ├── config/
- │   │               ├── controller/
- │   │               ├── dto/
- │   │               ├── exception/
- │   │               ├── model/
- │   │               ├── repository/
- │   │               ├── service/
- │   │               ├── security/
- │   │               └── DirectoryServiceApplication.java
- │   └── resources/
- │       ├── application.properties
- │       └── data.sql
- └── test/
-     └── java/
+```text
+jds-root/
+├── pom.xml                      # Parent coordination orchestration configuration
+├── .gitignore                   # Shared platform clean definitions
+│
+├── jds-server/                  # Headless REST API & LDAP Backend Engine
+│   ├── pom.xml                  # Server dependencies (Spring Boot, Security, JPA)
+│   └── src/main/java/com/directoryservice/
+│       ├── DirectoryServiceApplication.java
+│       ├── api/                 # Handles incoming JSON client routes
+│       ├── audit/               # Internal state monitoring
+│       ├── cache/               # Data optimizations for high read frequency
+│       ├── config/              # Security filter chains and datasources
+│       ├── exception/           # Unified server error handling
+│       ├── ldap/                # Inbound native protocol processors
+│       ├── model/               # Relational database table entities
+│       ├── policy/              # Account, password, and group compliance logic
+│       ├── repository/          # Native database query abstractions
+│       ├── scheduler/           # Automated database optimization tasks
+│       ├── security/            # Cryptography handlers and JWT token providers
+│       ├── service/             # Master transaction orchestration layers
+│       └── util/                # Common internal validation properties
+│
+├── jds-desktop-client/          # Native Management Interface Console
+│   ├── pom.xml                  # Client configurations (JavaFX modules, Retrofit)
+│   └── src/main/java/
+│       ├── module-info.java     # Strict JPMS access boundaries configuration
+│       └── com/directoryclient/
+│           ├── ClientApplication.java
+│           ├── network/         # Asynchronous server API stubs
+│           └── ui/              # JavaFX presentation layout control layers
+│
+└── docs/                        # Formal architectural layout blueprints
+    ├── architecture.md          # Multi-module decoupling patterns
+    ├── api.md                   # REST contractual specifications
+    ├── database-schema.md       # Entity relation models and recursive safeguards
+    └── security-model.md        # Combined RBAC and MAC governance properties
